@@ -34,13 +34,21 @@ cd ..
 
 ### 2. Configure API Key
 
-Create a `.env` file in the project root:
+Create a `.env` file in the project root (you can copy `.env.example`):
+
+```bash
+cp .env.example .env
+```
+
+Then edit `.env` and add your OpenRouter API key:
 
 ```bash
 OPENROUTER_API_KEY=sk-or-v1-...
 ```
 
 Get your API key at [openrouter.ai](https://openrouter.ai/). Make sure to purchase the credits you need, or sign up for automatic top up.
+
+**Security Note:** Never commit your `.env` file to version control. It's already in `.gitignore`.
 
 ### 3. Configure Models (Optional)
 
@@ -85,3 +93,31 @@ Then open http://localhost:5173 in your browser.
 - **Frontend:** React + Vite, react-markdown for rendering
 - **Storage:** JSON files in `data/conversations/`
 - **Package Management:** uv for Python, npm for JavaScript
+
+## Security
+
+This application is designed for **single-user, localhost-only deployment**. Security features include:
+
+- ✅ Path traversal protection in file storage
+- ✅ Input validation and sanitization  
+- ✅ Rate limiting (10 requests/minute for messages, 20/minute for conversations)
+- ✅ API key validation on startup
+- ✅ Localhost-only binding (127.0.0.1) by default
+- ✅ Secure error handling (no information disclosure)
+
+### Security Considerations
+
+**⚠️ Important:**
+- This app binds to `127.0.0.1` (localhost only) and has NO authentication
+- Do NOT expose it to a network without adding authentication
+- Conversations are stored as plain JSON files in `data/` directory
+- Anyone with filesystem access can read your conversations
+- Set appropriate file permissions: `chmod 700 data/` on Unix systems
+
+**For network deployment:**
+- Use a reverse proxy (nginx, Caddy) with HTTPS
+- Implement authentication (OAuth2, basic auth, etc.)
+- Review `SECURITY_REVIEW.md` for detailed security analysis
+- Consider encrypting conversations at rest
+
+See `SECURITY_REVIEW.md` for a complete security assessment and recommendations.

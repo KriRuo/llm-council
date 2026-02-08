@@ -1,12 +1,29 @@
 """Configuration for the LLM Council."""
 
 import os
+import sys
 from dotenv import load_dotenv
 
 load_dotenv()
 
 # OpenRouter API key
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+
+# Validate API key is present
+if not OPENROUTER_API_KEY:
+    raise RuntimeError(
+        "OPENROUTER_API_KEY environment variable is required.\n"
+        "Please create a .env file in the project root with:\n"
+        "OPENROUTER_API_KEY=sk-or-v1-your-key-here\n"
+        "Get your API key from https://openrouter.ai/"
+    )
+
+# Warn if API key format looks incorrect
+if not OPENROUTER_API_KEY.startswith("sk-or-"):
+    print(
+        f"WARNING: OPENROUTER_API_KEY doesn't match expected format (should start with 'sk-or-')",
+        file=sys.stderr
+    )
 
 # Council members - list of OpenRouter model identifiers
 COUNCIL_MODELS = [

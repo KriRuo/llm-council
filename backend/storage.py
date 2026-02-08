@@ -2,10 +2,14 @@
 
 import json
 import os
+import uuid
+import logging
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 from .config import DATA_DIR
+
+logger = logging.getLogger(__name__)
 
 
 def ensure_data_dir():
@@ -14,8 +18,36 @@ def ensure_data_dir():
 
 
 def get_conversation_path(conversation_id: str) -> str:
-    """Get the file path for a conversation."""
-    return os.path.join(DATA_DIR, f"{conversation_id}.json")
+    """
+    Get the file path for a conversation.
+    
+    Args:
+        conversation_id: UUID string for the conversation
+        
+    Returns:
+        Absolute path to the conversation file
+        
+    Raises:
+        ValueError: If conversation_id is invalid or attempts path traversal
+    """
+    # Validate UUID format to prevent path traversal
+    try:
+        uuid.UUID(conversation_id)
+    except ValueError:
+        raise ValueError(f"Invalid conversation ID format: {conversation_id}")
+    
+    # Construct path safely
+    safe_filename = f"{conversation_id}.json"
+    full_path = Path(DATA_DIR).resolve() / safe_filename
+    data_dir_resolved = Path(DATA_DIR).resolve()
+    
+    # Ensure path is within DATA_DIR (prevent path traversal)
+    try:
+        full_path.relative_to(data_dir_resolved)
+    except ValueError:
+        raise ValueError(f"Path traversal attempt detected: {conversation_id}")
+    
+    return str(full_path)
 
 
 def create_conversation(conversation_id: str) -> Dict[str, Any]:
@@ -91,15 +123,23 @@ def list_conversations() -> List[Dict[str, Any]]:
     for filename in os.listdir(DATA_DIR):
         if filename.endswith('.json'):
             path = os.path.join(DATA_DIR, filename)
-            with open(path, 'r') as f:
-                data = json.load(f)
-                # Return metadata only
-                conversations.append({
-                    "id": data["id"],
-                    "created_at": data["created_at"],
-                    "title": data.get("title", "New Conversation"),
-                    "message_count": len(data["messages"])
-                })
+            try:
+                with open(path, 'r') as f:
+                    data = json.load(f)
+                    # Validate required fields exist
+                    if all(key in data for key in ['id', 'created_at', 'messages']):
+                        conversations.append({
+                            "id": data["id"],
+                            "created_at": data["created_at"],
+                            "title": data.get("title", "New Conversation"),
+                            "message_count": len(data["messages"])
+                        })
+                    else:
+                        logger.warning(f"Skipping conversation file with missing fields: {filename}")
+            except (json.JSONDecodeError, IOError, KeyError, TypeError) as e:
+                # Log but skip invalid files
+                logger.warning(f"Skipping invalid conversation file {filename}: {e}")
+                continue
 
     # Sort by creation time, newest first
     conversations.sort(key=lambda x: x["created_at"], reverse=True)

@@ -1,8 +1,11 @@
 """OpenRouter API client for making LLM requests."""
 
 import httpx
+import logging
 from typing import List, Dict, Any, Optional
 from .config import OPENROUTER_API_KEY, OPENROUTER_API_URL
+
+logger = logging.getLogger(__name__)
 
 
 async def query_model(
@@ -48,8 +51,17 @@ async def query_model(
                 'reasoning_details': message.get('reasoning_details')
             }
 
+    except httpx.HTTPStatusError as e:
+        logger.error(f"HTTP error querying model {model}: {e.response.status_code}", exc_info=True)
+        return None
+    except httpx.RequestError as e:
+        logger.error(f"Request error querying model {model}: {type(e).__name__}", exc_info=True)
+        return None
+    except (KeyError, IndexError) as e:
+        logger.error(f"Unexpected response format from model {model}: {type(e).__name__}", exc_info=True)
+        return None
     except Exception as e:
-        print(f"Error querying model {model}: {e}")
+        logger.error(f"Unexpected error querying model {model}: {type(e).__name__}", exc_info=True)
         return None
 
 
