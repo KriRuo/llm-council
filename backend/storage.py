@@ -136,7 +136,7 @@ def list_conversations() -> List[Dict[str, Any]]:
                         })
                     else:
                         logger.warning(f"Skipping conversation file with missing fields: {filename}")
-            except (json.JSONDecodeError, IOError, KeyError, TypeError) as e:
+            except (json.JSONDecodeError, IOError, KeyError) as e:
                 # Log but skip invalid files
                 logger.warning(f"Skipping invalid conversation file {filename}: {e}")
                 continue

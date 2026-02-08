@@ -54,12 +54,10 @@ class SendMessageRequest(BaseModel):
     @field_validator('content')
     @classmethod
     def validate_content(cls, v: str) -> str:
-        """Validate message content is not empty and within limits."""
+        """Validate message content is not empty."""
         stripped = v.strip()
         if not stripped:
             raise ValueError("Message content cannot be empty or whitespace only")
-        if len(stripped) > 50000:
-            raise ValueError("Message content exceeds maximum length (50,000 characters)")
         return stripped
 
 
